@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoLearn - Multi-Age Learning Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Firebase SDK (Mocked initialization for UI) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="neon-dark">
+
+    <!-- Background Matrix / Particles -->
+    <div class="bg-particles" id="particles-js"></div>
+
+    <!-- Audio Elements -->
+    <!-- Audio system handled dynamically by AudioManager in script.js using Web Audio API / Audio Objects -->
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen" class="screen active flex-center">
+        <div class="splash-content glitched-text">
+            <h1 data-text="NEO LEARN">NEO LEARN</h1>
+            <p>Next-Gen Multi-Age Learning Platform</p>
+            <div class="cyber-loader"></div>
+        </div>
+    </div>
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen" class="screen flex-center">
+        <div class="auth-box cyber-panel">
+            <h2><i class="fas fa-fingerprint"></i> System Login</h2>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="app.switchAuthTab('login')">Login</button>
+                <button class="tab-btn" onclick="app.switchAuthTab('register')">Register</button>
+            </div>
+            <input type="email" id="auth-email" class="cyber-input" placeholder="Email Address">
+            <input type="password" id="auth-password" class="cyber-input" placeholder="Password">
+            <input type="text" id="auth-name" class="cyber-input hidden" placeholder="Player Name">
+
+            <button class="btn-neon" onclick="app.authenticate()">Initialize Link <i class="fas fa-bolt"></i></button>
+            <button class="btn-ghost" style="margin-top:10px;" onclick="app.guestLogin()">Continue as Guest</button>
+        </div>
+    </div>
+
+    <!-- AGE SELECTION SCREEN -->
+    <div id="age-screen" class="screen flex-center">
+        <div class="cyber-panel text-center" style="max-width: 800px; width: 90%;">
+            <h2 class="neon-text">Select Operational Mode</h2>
+            <p style="margin-bottom: 20px; color: var(--text-muted);">Configure the platform for your learning level.
+            </p>
+
+            <div class="age-grid">
+                <div class="age-card 3d-card" onclick="app.selectAgeGroup('kids')">
+                    <i class="fas fa-child age-icon kids-color"></i>
+                    <h3>Kids Mode</h3>
+                    <p>Ages 4-10</p>
+                    <small>Alphabet, Math, Memory, Story</small>
+                </div>
+                <div class="age-card 3d-card" onclick="app.selectAgeGroup('teens')">
+                    <i class="fas fa-gamepad age-icon teens-color"></i>
+                    <h3>Teen Mode</h3>
+                    <p>Ages 11-17</p>
+                    <small>Coding, Logic, Escape Rooms</small>
+                </div>
+                <div class="age-card 3d-card" onclick="app.selectAgeGroup('adults')">
+                    <i class="fas fa-user-tie age-icon adults-color"></i>
+                    <h3>Adult / College</h3>
+                    <p>Ages 18+</p>
+                    <small>Aptitude, Cybersecurity, Career</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav id="navbar" class="hidden cyber-nav">
+        <div class="nav-left">
+            <button id="nav-back-btn" class="icon-btn" onclick="app.goBack()" title="Go Back"
+                style="display:none; margin-right:15px;"><i class="fas fa-arrow-left"></i></button>
+            <div class="avatar-container">
+                <img id="nav-avatar" src="" alt="Avatar">
+                <div class="status-dot"></div>
+            </div>
+            <div class="user-info">
+                <span id="nav-name">Player_01</span>
+                <div class="level-badge">LVL <span id="nav-level">1</span></div>
+            </div>
+        </div>
+        <div class="nav-stats">
+            <div class="stat hint--bottom" aria-label="Current Streak"><i class="fas fa-fire neon-orange"></i> <span
+                    id="nav-streak">0</span></div>
+            <div class="stat hint--bottom" aria-label="Credits"><i class="fas fa-coins neon-gold"></i> <span
+                    id="nav-coins">0</span></div>
+            <div class="stat hint--bottom" aria-label="Mode"><i class="fas fa-layer-group neon-blue"></i> <span
+                    id="nav-mode-label">Kids</span></div>
+        </div>
+        <div class="nav-right">
+            <button class="icon-btn" onclick="app.showScreen('age-screen')" title="Change Mode"><i
+                    class="fas fa-exchange-alt"></i></button>
+            <button class="icon-btn" id="music-btn" onclick="app.toggleMusic()" title="Toggle Audio">
+                <i id="music-icon" class="fas fa-volume-up"></i>
+                <div class="audio-visualizer hidden" id="audio-visualizer">
+                    <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                </div>
+            </button>
+            <button class="icon-btn" onclick="app.toggleSettings()" title="System Settings"><i
+                    class="fas fa-cog"></i></button>
+        </div>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-screen" class="screen">
+        <div class="dashboard-container">
+
+            <!-- AI Tutor Welcome -->
+            <div class="ai-tutor-banner cyber-panel">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nexus" class="ai-avatar floating">
+                <div class="ai-text">
+                    <h3><i class="fas fa-robot"></i> AI Tutor Assistant</h3>
+                    <p id="ai-greeting">Welcome to the Nexus. I've prepared a custom learning path based on your
+                        performance.</p>
+                </div>
+                <button class="btn-neon small" onclick="app.startSmartPlan()"><i class="fas fa-play"></i> Start Daily
+                    Plan</button>
+            </div>
+
+            <!-- Profile & XP -->
+            <div class="profile-card cyber-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3>Neural Progress</h3>
+                    <span>XP: <span id="nav-xp">0</span> / <span id="nav-xp-next">100</span></span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="xp-bar" class="progress-bar-fill neon-bar"></div>
+                </div>
+
+                <h4 style="margin-top: 20px;">Achievement Badges</h4>
+                <div class="badges-container" id="badges-container">
+                    <!-- Badges injected via JS -->
+                </div>
+            </div>
+
+            <h2 class="section-title neon-text"><i class="fas fa-th"></i> Available Modules</h2>
+            <div class="categories-grid" id="modules-grid">
+                <!-- Modules injected based on age group -->
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERAL QUIZ SCREEN -->
+    <div id="quiz-screen" class="screen">
+        <div class="quiz-header cyber-panel">
+            <div class="quiz-stats">
+                <span class="neon-text">Score: <span id="quiz-score">0</span></span>
+                <span>Module: <span id="quiz-qnum">1</span>/5</span>
+            </div>
+            <div class="timer-container">
+                <i class="fas fa-clock"></i>
+                <div class="timer-bar-bg">
+                    <div id="timer-bar" class="timer-bar-fill neon-bar"></div>
+                </div>
+                <span id="timer-text">15s</span>
+            </div>
+        </div>
+
+        <div class="ai-assistant">
+            <div class="chat-bubble cyber-border" id="ai-message">Analyzing question difficulty...</div>
+        </div>
+
+        <div class="quiz-container cyber-panel">
+            <h2 id="question-text">Question goes here?</h2>
+            <div id="options-container" class="options-grid">
+                <!-- Answer Options -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MATH SPEED RACE SCREEN -->
+    <div id="math-race-screen" class="screen flex-center">
+        <div class="cyber-panel text-center" style="max-width: 600px; width: 100%;">
+            <h2 class="neon-text"><i class="fas fa-tachometer-alt"></i> Math Speed Race</h2>
+            <p>Solve as many as possible in 30 seconds!</p>
+
+            <div class="race-stats"
+                style="display: flex; justify-content: space-around; margin: 20px 0; font-size: 1.5rem;">
+                <div><i class="fas fa-stopwatch neon-red"></i> <span id="race-time">30</span>s</div>
+                <div><i class="fas fa-star neon-gold"></i> <span id="race-score">0</span></div>
+            </div>
+
+            <h1 id="race-equation" style="font-size: 4rem; margin: 30px 0;">5 + 5</h1>
+
+            <div class="race-controls">
+                <input type="number" id="race-input" class="cyber-input text-center" style="font-size: 2rem;"
+                    placeholder="?" autofocus>
+                <button class="btn-neon" onclick="app.games.mathRace.submit()">Submit</button>
+            </div>
+
+            <button id="race-start-btn" class="btn-ghost" style="margin-top: 20px;"
+                onclick="app.games.mathRace.start()">Start Engine</button>
+        </div>
+    </div>
+
+    <!-- MEMORY CHALLENGE SCREEN -->
+    <div id="memory-screen" class="screen flex-center">
+        <div class="cyber-panel text-center" style="max-width: 800px; width: 100%;">
+            <h2 class="neon-text"><i class="fas fa-brain"></i> Neural Memory Link</h2>
+            <p>Find the matching pairs.</p>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <span>Moves: <span id="memory-moves">0</span></span>
+                <span>Matches: <span id="memory-matches">0</span>/6</span>
+            </div>
+
+            <div class="memory-grid" id="memory-grid">
+                <!-- Cards injected here -->
+            </div>
+
+            <button class="btn-ghost" style="margin-top: 20px;"
+                onclick="app.showScreen('dashboard-screen')">Abort</button>
+        </div>
+    </div>
+
+    <!-- RESULTS SCREEN -->
+    <div id="results-screen" class="screen flex-center">
+        <div class="results-box cyber-panel text-center">
+            <h1 id="result-title" class="glitched-text" data-text="MISSION ACCOMPLISHED">MISSION ACCOMPLISHED</h1>
+            <div class="result-stats" style="margin: 30px 0; font-size: 1.5rem; line-height: 2;">
+                <p>Score: <strong id="result-score" class="neon-text">0</strong></p>
+                <p>XP Earned: <strong id="result-xp" class="neon-blue">+0</strong></p>
+                <p>Credits: <strong id="result-coins" class="neon-gold">+0</strong></p>
+            </div>
+            <div id="level-up-msg" class="hidden floating"
+                style="color: var(--primary); font-size: 2rem; font-weight: bold; margin-bottom: 20px; text-shadow: 0 0 10px var(--primary);">
+                🌟 RANK UP! 🌟</div>
+            <div class="results-buttons" style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn-ghost" onclick="app.showScreen('dashboard-screen')"><i
+                        class="fas fa-satellite-dish"></i> Hub</button>
+                <button class="btn-neon" onclick="app.retryCurrentModule()"><i class="fas fa-redo"></i> Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal hidden flex-center">
+        <div class="modal-content cyber-panel">
+            <h2>System Preferences ⚙️</h2>
+            <div class="setting-item">
+                <span>Master Audio</span>
+                <button class="icon-btn small" style="width:30px;height:30px;font-size:0.9rem;"
+                    onclick="app.toggleMusic()"><i id="settings-music-icon" class="fas fa-volume-up"></i></button>
+            </div>
+            <div class="setting-item slider-item">
+                <span>Music Volume</span>
+                <input type="range" id="music-vol" class="cyber-slider" min="0" max="100" value="30"
+                    onchange="app.updateVolume('music', this.value)">
+            </div>
+            <div class="setting-item slider-item">
+                <span>SFX Volume</span>
+                <input type="range" id="sfx-vol" class="cyber-slider" min="0" max="100" value="70"
+                    onchange="app.updateVolume('sfx', this.value)">
+            </div>
+            <div class="setting-item">
+                <span>Cloud Sync (Mock)</span>
+                <span class="neon-text">Active</span>
+            </div>
+            <div class="setting-item">
+                <span>Wipe Database</span>
+                <button class="btn-danger" onclick="app.resetProgress()">Factory Reset</button>
+            </div>
+            <button class="btn-ghost" style="margin-top: 20px; width: 100%;" onclick="app.toggleSettings()">Close
+                Panel</button>
+        </div>
+    </div>
+
+    <!-- Particles.js for Matrix background -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- Main Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>
